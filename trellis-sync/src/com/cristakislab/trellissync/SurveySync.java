@@ -1,4 +1,4 @@
-package com.cristakislab.surveysync;
+package com.cristakislab.trellissync;
 
 import java.io.OutputStream;
 import java.sql.Connection;
