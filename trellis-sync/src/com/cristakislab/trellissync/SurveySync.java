@@ -1,5 +1,6 @@
 package com.cristakislab.trellissync;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -17,10 +18,12 @@ public class SurveySync {
 
 	private Connection conn;
 	private Long serverId;
-	private List<Long> serverIds; // TODO: for central!
+	private List<Long> serverIds; // TODO: for central only!
+	private String workingDir;
 
-	public SurveySync(Connection conn) {
+	public SurveySync(Connection conn, String workingDir) {
 		this.conn = conn;
+		this.workingDir = workingDir;
 	}
 
 	protected Connection getConn() {
@@ -29,7 +32,7 @@ public class SurveySync {
 
 	/**
 	 * <p>
-	 * Get's current conection's server_id (of course MySQL specific).
+	 * Get's current conection's server_id (MySQL specific).
 	 * </p>
 	 * 
 	 * @return
@@ -44,6 +47,10 @@ public class SurveySync {
 			serverId = result.longValue();
 		}
 		return serverId;
+	}
+
+	protected long currentUnixTime() {
+		return System.currentTimeMillis() / 1000L;
 	}
 
 	/**
@@ -146,36 +153,26 @@ public class SurveySync {
 		checkHasColumn(tableName, "modify_date");
 	}
 
-	public void remoteToCentral() {
-		// Prepare zip file containing all modified records of all tables
-		// zip file: yyyyMMddHHmmss_<server_id>.zip
-		// <table>.json
+	public void remoteToCentral() throws IOException {
+
 	}
-	
+
 	public void processRemote() {
 		// Process zip file got from remote. One file at a time.
 		// Load sync_in_* tables
-		// Process sync_in_* updating central data and generating records for sync_out_*
+		// Process sync_in_* updating central data and generating records for
+		// sync_out_*
 		// Prepares zip files from sync_out_*, one file per server.
 	}
-	
+
+	// shell scripts are responsible of zipping and unzipping!
 }
 
 /*
-FileOutputStream fos = null;
-try {
-    // Make sure that the output stream is in Append mode. Otherwise you will
-    // truncate your file, which probably isn't what you want to do :-) 
-    fos = new FileOutputStream(file, true);
-    // -> file was closed
-} catch(IOException e) {
-    // -> file still open
-} finally {
-    if(fos != null) {
-    try {
-        fos.close();
-    } catch (IOException e) {
-        e.printStackTrace();
-    }
-}
-*/
+ * FileOutputStream fos = null; try { // Make sure that the output stream is in
+ * Append mode. Otherwise you will // truncate your file, which probably isn't
+ * what you want to do :-) fos = new FileOutputStream(file, true); // -> file
+ * was closed } catch(IOException e) { // -> file still open } finally { if(fos
+ * != null) { try { fos.close(); } catch (IOException e) { e.printStackTrace();
+ * } }
+ */
