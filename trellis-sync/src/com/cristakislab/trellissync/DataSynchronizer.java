@@ -140,7 +140,7 @@ public class DataSynchronizer {
 	private List<String> inboundTables;
 
 	protected static final String SQL_GET_INBOUND_TABLES = ""
-			+ "select table_name from sync_tables where inbound = 'Y' order by in_order";
+			+ "select table_name from sync_tables where inbound = 'Y' order by in_order, table_name";
 
 	protected List<String> getInboundTables() throws SQLException {
 		if (inboundTables == null) {
@@ -171,6 +171,8 @@ public class DataSynchronizer {
 	public List<Map<String, Object>> getModifiedRecords(String tableName,
 			long lastModifyDate, long newModifyDate) throws SQLException {
 		checkHasModifyDate(tableName);
+		logger.debug("Checking modified records since {} on {}",
+				lastModifyDate, tableName);
 		String sql = MessageFormat.format(
 				"select * from {0} where modify_date > ? and modify_date <= ?",
 				tableName);
@@ -206,6 +208,8 @@ public class DataSynchronizer {
 		zipOut.putNextEntry(entry);
 		try {
 			saveRecords(records, zipOut);
+			logger.info("Saved {} record(s) of table \"{}\".", records.size(),
+					tableName);
 		} finally {
 			zipOut.closeEntry();
 		}
@@ -309,11 +313,13 @@ public class DataSynchronizer {
 		sql.insert(0, "lock tables sync_control write");
 		QueryRunner runner = new QueryRunner();
 		runner.update(getConn(), sql.toString());
+		logger.info("Tables locked: {}", tableNames);
 	}
 
 	protected void unlockTables() throws SQLException {
 		QueryRunner runner = new QueryRunner();
 		runner.update(getConn(), "unlock tables");
+		logger.info("Tables unlocked.");
 	}
 
 	protected void addServerIdFile(ZipOutputStream zipOut) throws IOException,
