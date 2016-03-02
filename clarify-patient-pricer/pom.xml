@@ -26,14 +26,14 @@
   		<artifactId>JRecord</artifactId>
   		<version>0.80.8i</version>
   		<scope>system</scope>
-  		<systemPath>${basedir}/jrecord-libs/JRecord.jar</systemPath>
+  		<systemPath>${project.basedir}/jrecord-libs/JRecord.jar</systemPath>
   	</dependency>
   	<dependency>
   		<groupId>net.sf.cb2xml</groupId>
   		<artifactId>cb2xml</artifactId>
   		<version>0.95.5</version>
   		<scope>system</scope>
-  		<systemPath>${basedir}/jrecord-libs/cb2xml.jar</systemPath>
+  		<systemPath>${project.basedir}/jrecord-libs/cb2xml.jar</systemPath>
   	</dependency>
   </dependencies>
 </project>
