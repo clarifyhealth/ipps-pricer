@@ -1,5 +1,6 @@
 package com.clarify.pricer.dto;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 
 public class Cbsa {
@@ -10,8 +11,8 @@ public class Cbsa {
 	private String f_cbsa;
 	private String f_cbsa_size;
 	private Date f_cbsa_eff_date;
-	private double f_cbsa_wage_indx1;
-	private double f_cbsa_wage_indx2;
+	private BigDecimal f_cbsa_wage_indx1;
+	private BigDecimal f_cbsa_wage_indx2;
 	private String f_cbsa_state_name;
 
 	public String getF_cbsa() {
@@ -38,19 +39,19 @@ public class Cbsa {
 		this.f_cbsa_eff_date = f_cbsa_eff_date;
 	}
 
-	public double getF_cbsa_wage_indx1() {
+	public BigDecimal getF_cbsa_wage_indx1() {
 		return f_cbsa_wage_indx1;
 	}
 
-	public void setF_cbsa_wage_indx1(double f_cbsa_wage_indx1) {
+	public void setF_cbsa_wage_indx1(BigDecimal f_cbsa_wage_indx1) {
 		this.f_cbsa_wage_indx1 = f_cbsa_wage_indx1;
 	}
 
-	public double getF_cbsa_wage_indx2() {
+	public BigDecimal getF_cbsa_wage_indx2() {
 		return f_cbsa_wage_indx2;
 	}
 
-	public void setF_cbsa_wage_indx2(double f_cbsa_wage_indx2) {
+	public void setF_cbsa_wage_indx2(BigDecimal f_cbsa_wage_indx2) {
 		this.f_cbsa_wage_indx2 = f_cbsa_wage_indx2;
 	}
 

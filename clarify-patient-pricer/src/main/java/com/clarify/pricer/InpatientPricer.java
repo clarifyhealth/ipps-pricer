@@ -1,5 +1,7 @@
 package com.clarify.pricer;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -19,68 +21,21 @@ import com.clarify.pricer.dto.DrgDsc;
 import com.clarify.pricer.dto.DrgTab;
 import com.clarify.pricer.dto.Prov;
 
+// BIG TODO:
+// Should we use BigDecimal for all the operations?
+// 
+
 public abstract class InpatientPricer {
 
-	// TODO: check logic...
-	// public static final int RST_CODE_FULL_DRG_PAYMENT = 0;
-	// public static final int RST_CODE_DAY_OUTLIER_PAYMENT = 2;
+	// 88 PAY-PERDIEM-DAYS VALUE 03.
+	public static int PAY_PERDIEM_DAYS = 3;
+	// 88 PAY-XFER-NO-COST VALUE 06.
+	public static int PAY_XFER_NO_COST = 6;
+	// 88 PAY-XFER-SPEC-DRG VALUE 09.
+	public static int PAY_XFER_SPEC_DRG = 9;
 
-	public static final int RST_CODE_NO_PROVIDER_INFO = 51;
-	public static final int RST_CODE_INVALID_CBSA_OR_WI = 52;
-
-	public static final Map<Integer, String> resultCodes = new HashMap<>();
-
-	static {
-		// TODO: fill codes
-		resultCodes.put(RST_CODE_NO_PROVIDER_INFO,
-				"NO PROVIDER SPECIFIC INFO FOUND OR PROVIDER TERMINATED");
-		resultCodes.put(RST_CODE_INVALID_CBSA_OR_WI,
-				"INVALID CBSA # IN PSF OR INVALID WAGE INDEX");
-	}
-
-	public static class PricerResult {
-		private int code;
-		private String reason;
-		private Map<String, Number> values = new HashMap<>();
-
-		public PricerResult() {
-		}
-
-		public PricerResult(int code) {
-			setCode(code);
-		}
-
-		public PricerResult(int code, Map<String, Number> values) {
-			this(code);
-			this.values = values;
-		}
-
-		public int getCode() {
-			return code;
-		}
-
-		public void setCode(int code) {
-			this.code = code;
-			this.reason = resultCodes.get(code);
-		}
-
-		public String getReason() {
-			return reason;
-		}
-
-		public void setReason(String reason) {
-			this.reason = reason;
-		}
-
-		public Map<String, Number> getValues() {
-			return values;
-		}
-
-		public static PricerResult build(int code) {
-			return new PricerResult(code);
-		}
-	}
-
+	// TODO: not quite sure if this are used when computing
+	// because INVDRV convert from flags to procedure/diagnostic codes.
 	public static class ProcDiag {
 		private String procCode;
 		private String diagCode;
@@ -103,27 +58,127 @@ public abstract class InpatientPricer {
 		}
 	}
 
-	private Connection connection;
+	private String providerCode;
+	private String drgCode;
+	private LocalDate admitDate;
+	private LocalDate dischargeDate;
+	private double billCharges;
+	private boolean costOutlierThreshold;
+	private boolean hmoPaidClaim;
+	private boolean transfer;
+	private boolean postAcuteTransfer;
+	private int reviewCode;
+	private Map<String, Boolean> flags;
+	private Map<String, Number> otherValues;
 
-	protected String providerCode;
-	protected String drgCode;
-	protected LocalDate admitDate;
-	protected LocalDate dischargeDate;
-	protected double billCharges;
-	protected boolean costOutlierThreshold;
-	protected boolean hmoPaidClaim;
-	protected boolean transfer;
-	protected boolean postAcuteTransfer;
-	protected Map<String, Boolean> flags;
-	protected Map<String, Number> otherValues;
-	protected DrgDsc drgDsc;
-	protected DrgTab drgTab;
-	protected Prov prov;
-	protected PricerResult pricerResult;
+	private DrgDsc drgDsc;
+	private DrgTab drgTab;
+	private Prov prov;
+	private Cbsa wageIndexRec;
+	private PPHoldArea holdArea = new PPHoldArea();
+	private PPSData ppsdata = new PPSData();
+
+	protected String getProviderCode() {
+		return providerCode;
+	}
+
+	protected String getDrgCode() {
+		return drgCode;
+	}
+
+	protected LocalDate getAdmitDate() {
+		return admitDate;
+	}
+
+	protected LocalDate getDischargeDate() {
+		return dischargeDate;
+	}
+
+	protected int getDaysBetweenAdmitDischage() {
+		return admitDate.until(dischargeDate).getDays();
+	}
+
+	/**
+	 * <p>
+	 * INDRV:
+	 * </p>
+	 * <ul>
+	 * <li>WK-LOS</li>
+	 * <li>B-LOS</li>
+	 * <li>B-COVERED-DAYS</li>
+	 * </ul>
+	 * 
+	 * @return
+	 */
+	protected int getLeghtOfStay() {
+		int len = getDaysBetweenAdmitDischage();
+		if (len == 0) {
+			len = 1;
+		}
+		return len;
+	}
+
+	protected double getBillCharges() {
+		return billCharges;
+	}
+
+	protected boolean isCostOutlierThreshold() {
+		return costOutlierThreshold;
+	}
+
+	protected boolean isHmoPaidClaim() {
+		return hmoPaidClaim;
+	}
+
+	protected boolean isTransfer() {
+		return transfer;
+	}
+
+	protected boolean isPostAcuteTransfer() {
+		return postAcuteTransfer;
+	}
+
+	protected int getReviewCode() {
+		return reviewCode;
+	}
+
+	protected void setReviewCode(int reviewCode) {
+		this.reviewCode = reviewCode;
+	}
+
+	protected Map<String, Boolean> getFlags() {
+		return flags;
+	}
+
+	protected Map<String, Number> getOtherValues() {
+		return otherValues;
+	}
+
+	protected DrgDsc getDrgDsc() {
+		return drgDsc;
+	}
+
+	protected DrgTab getDrgTab() {
+		return drgTab;
+	}
+
+	protected Prov getProv() {
+		return prov;
+	}
+
+	protected Cbsa getWageIndexRec() {
+		return wageIndexRec;
+	}
+
+	protected PPHoldArea getHoldArea() {
+		return holdArea;
+	}
+
+	protected PPSData getPpsdata() {
+		return ppsdata;
+	}
+
 	protected List<ProcDiag> procDiagList;
-	protected Map<String, Number> computedValues;
-
-	protected Cbsa wageIndex;
 
 	protected abstract LocalDate getMinDischargeDate();
 
@@ -134,6 +189,8 @@ public abstract class InpatientPricer {
 	protected abstract String[] getConflictingFlags();
 
 	protected abstract String[] getOtherValueNames();
+
+	private Connection connection;
 
 	protected Connection getConnection() {
 		return connection;
@@ -275,12 +332,19 @@ public abstract class InpatientPricer {
 		}
 	}
 
+	protected void validateTransfer() {
+		if (transfer && postAcuteTransfer) {
+			throw new IllegalArgumentException("Cannot have both transfers.");
+		}
+	}
+
 	protected void validate() {
 		validateRequired();
 		validateDrgCode();
 		validateDates();
 		validateFlags();
 		validateConflictingFlags();
+		validateTransfer();
 	}
 
 	protected abstract void fillProcDiagList();
@@ -293,39 +357,38 @@ public abstract class InpatientPricer {
 		procDiagList.add(new ProcDiag(procCode));
 	}
 
-	protected Cbsa findWageIndex() throws SQLException {
-		String providerNo = prov.getP_provider_no();
-		String specPayInd = prov.getP_cbsa_spec_pay_ind();
-		String cbsaLoc = prov.getP_cbsa_geo_loc();
+	protected Cbsa findWageIndexRec() throws SQLException {
+		String specPayInd = getProv().getP_cbsa_spec_pay_ind();
+		String cbsaLoc = getProv().getP_cbsa_geo_loc();
 		if ("Y".equals(specPayInd)) {
-			cbsaLoc = prov.getP_cbsa_reclass_loc();
+			cbsaLoc = getProv().getP_cbsa_reclass_loc();
 		}
-		if (prov.isIndianHealtService()) {
-			if (providerNo.startsWith("02")) {
+		if (getProv().isIndianHealtService()) {
+			if (getProv().isAlaska()) {
 				cbsaLoc = "   98";
 			} else {
 				cbsaLoc = "   99";
 			}
 		}
-		// Seems Puerto Rico (0200-GET-CBSAPR)
-		if (providerNo.startsWith("40")) {
+		// INVDRV.0200-GET-CBSAPR
+		if (getProv().isPuertoRico()) {
 			if ("Y2".contains(specPayInd)) {
-				cbsaLoc = prov.getP_cbsa_reclass_loc();
+				cbsaLoc = getProv().getP_cbsa_reclass_loc();
 			} else {
-				cbsaLoc = prov.getP_cbsa_geo_loc();
+				cbsaLoc = getProv().getP_cbsa_geo_loc();
 			}
 			cbsaLoc = cbsaLoc.substring(0, 4) + "*";
 		}
 		Cbsa result = findCbsa(cbsaLoc, dischargeDate);
 		if (result != null) {
 			if ("12".contains(specPayInd)) {
-				result.setF_cbsa_wage_indx1(prov.getP_cbsa_spec_wi());
+				result.setF_cbsa_wage_indx1(getProv().getP_cbsa_spec_wi());
 			}
 			if ("Y".equals(specPayInd)) {
 				result.setF_cbsa_wage_indx1(result.getF_cbsa_wage_indx2());
 			}
 			String size = result.getF_cbsa_size();
-			if (prov.isCbsaStdRuralCheck()) {
+			if (getProv().isCbsaStdRuralCheck()) {
 				size = Cbsa.SIZE_ALL_RURAL;
 			} else if (!Cbsa.SIZE_LARGE_URBAN.equals(size)) {
 				size = Cbsa.SIZE_OTHER_URBAN;
@@ -333,6 +396,159 @@ public abstract class InpatientPricer {
 			result.setF_cbsa_size(size);
 		}
 		return result;
+	}
+
+	protected BigDecimal double2bd(double value, int scale) {
+		return BigDecimal.valueOf(value)
+				.setScale(scale, RoundingMode.HALF_EVEN);
+	}
+
+	protected double bd2double(BigDecimal value) {
+		return value == null ? 0 : value.doubleValue();
+	}
+
+	/**
+	 * <p>
+	 * PPCAL.1000-EDIT-THE-BILL-INFO
+	 * </p>
+	 */
+	protected void editTheBillInfo() {
+		holdArea.setCapiPaycdePct1(BigDecimal.ONE);
+		holdArea.setCapiPaycdePct2(BigDecimal.ZERO);
+		holdArea.setCovDays(getLeghtOfStay());
+		holdArea.setRegDays(getLeghtOfStay());
+	}
+
+	/**
+	 * <p>
+	 * PPCAL.2000-ASSEMBLE-PPS-VARIABLES
+	 * </p>
+	 */
+	protected void assemblePPSVariables() {
+		holdArea.setFacSpecRate(getProv().getP_capi_hosp_spec_rate());
+		holdArea.setInternRatio(getProv().getP_intern_ratio());
+		if (getProv().isAlaska() || getProv().isHawaii()) {
+			holdArea.setOperCola(getProv().getP_cola());
+		} else {
+			holdArea.setOperCola(BigDecimal.ONE);
+		}
+		getDrgWeigth();
+		holdArea.setWageIndex(getWageIndexRec().getF_cbsa_wage_indx1());
+		holdArea.setPrWageIndex(getWageIndexRec().getF_cbsa_wage_indx1());
+		getLaborRates();
+		holdArea.setOperHspPct(BigDecimal.ZERO);
+		holdArea.setOperFspPct(BigDecimal.ONE);
+		holdArea.setNatPct(BigDecimal.ONE);
+		holdArea.setRegPct(BigDecimal.ZERO);
+		if (getProv().isPuertoRico()) {
+			holdArea.setNatPct(0.75);
+			holdArea.setRegPct(0.25);
+		}
+		if (getProv().isSchRebasedFY90() || getProv().isEach()
+				|| getProv().isMdhRebasedFY90()) {
+			holdArea.setOperHspPct(BigDecimal.ONE);
+		}
+	}
+
+	/**
+	 * <p>
+	 * PPCAL.2600-GET-DRG-WEIGHT
+	 * </p>
+	 */
+	protected void getDrgWeigth() {
+		holdArea.setDrgWt(drgTab.getDrg_weight());
+		holdArea.setAlos(drgTab.getDrg_gmalos());
+		holdArea.setArithAlos(drgTab.getDrg_arith_alos());
+		holdArea.setDaysCutoff(BigDecimal.ZERO);
+	}
+
+	protected void getLaborRates() {
+		// TODO: implement
+	}
+
+	/**
+	 * <p>
+	 * PPCAL.3000-CALC-PAYMENT
+	 * </p
+	 */
+	protected void calcPayment() {
+		calcStayUtilization();
+		calcOperFspAmt();
+		calOperDsh();
+
+		double interRatio = bd2double(holdArea.getInternRatio());
+		double operImeTeach = 1.35 * (Math.pow(1 + interRatio, .405) + 1);
+		holdArea.setOperImeTeach(double2bd(operImeTeach, 9));
+		ppsdata.setWageIndx(holdArea.getWageIndex());
+		ppsdata.setAvgLos(holdArea.getAlos());
+		ppsdata.setDaysCutoff(holdArea.getDaysCutoff());
+		holdArea.setPerdiemDays(getLeghtOfStay() + 1);
+		holdArea.setDschgFrctn(BigDecimal.ONE);
+		holdArea.setDrgWtFrctn(holdArea.getDrgWt());
+
+		if ((reviewCode == PAY_PERDIEM_DAYS || reviewCode == PAY_XFER_NO_COST)
+				|| (reviewCode == PAY_XFER_SPEC_DRG && drgTab
+						.isDrgPostacutePerdiem())) {
+			if (holdArea.getAlos().doubleValue() > 0) {
+				if (holdArea.getDschgFrctn().doubleValue() > 1) {
+					double computed = (double) holdArea.getPerdiemDays() / bd2double(holdArea.getAlos());
+					holdArea.setTransferAdj(double2bd(computed, 4));
+					holdArea.setDschgFrctn(double2bd(computed, 4));
+					if (computed > 1) {
+						holdArea.setTransferAdj(BigDecimal.ONE);
+						holdArea.setDschgFrctn(BigDecimal.ONE);
+					} else {
+						// double drgWt = bd2double(holdArea.getDrgWt());
+						holdArea.setDrgWt(double2bd(holdArea.getTransferAdj()
+								.doubleValue()
+								* holdArea.getDrgWt().doubleValue(), 4));
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * <p>
+	 * PPCAL.3100-CALC-STAY-UTILIZATION
+	 * </p>
+	 */
+	protected void calcStayUtilization() {
+		// 260900 3100-CALC-STAY-UTILIZATION.
+		// 261000
+		// 261100 MOVE 0 TO PPS-REG-DAYS-USED.
+		// 261200 MOVE 0 TO PPS-LTR-DAYS-USED.
+		// 261300
+		// 261400 IF H-REG-DAYS > 0
+		// 261500 IF H-REG-DAYS > B-LOS
+		// 261600 MOVE B-LOS TO PPS-REG-DAYS-USED
+		// 261700 ELSE
+		// 261800 MOVE H-REG-DAYS TO PPS-REG-DAYS-USED
+		// 261900 ELSE
+		// 262000 IF H-LTR-DAYS > B-LOS
+		// 262100 MOVE B-LOS TO PPS-LTR-DAYS-USED
+		// 262200 ELSE
+		// 262300 MOVE H-LTR-DAYS TO PPS-LTR-DAYS-USED.
+		// TODO: implement
+
+	}
+
+	/**
+	 * <p>
+	 * PPCAL.3300-CALC-OPER-FSP-AMT
+	 * </p>
+	 */
+	protected void calcOperFspAmt() {
+		// TODO: implement
+	}
+
+	/**
+	 * <p>
+	 * 3900A-CALC-OPER-DSH - 3900A-EXIT
+	 * </p>
+	 */
+	protected void calOperDsh() {
+		// TODO: implement
 	}
 
 	public PricerResult compute( //
@@ -361,27 +577,45 @@ public abstract class InpatientPricer {
 		this.otherValues = otherValues == null ? new HashMap<>() : otherValues;
 		this.drgDsc = findDrgDsc(drgCode);
 		this.drgTab = findDrgTab(drgCode);
-		this.prov = findProv(providerCode, dischargeDate);
+		this.prov = findProv(getProviderCode(), dischargeDate);
 		this.procDiagList = new ArrayList<>();
-		this.computedValues = new HashMap<>();
 
-		// Basic validation
+		// Basic validations
 		validate();
 
 		// Business validations
 		if (this.prov == null) {
-			return PricerResult.build(RST_CODE_NO_PROVIDER_INFO);
+			return PricerResult.build(PricerResult.RST_NO_PROVIDER_INFO);
 		}
-		String geoLoc = this.prov.getP_cbsa_geo_loc();
+		boolean newHosp = "Y".equals(getProv().getP_capi_new_hosp());
+		String payCode = getProv().getP_capi_pps_pay_code();
+		if (!newHosp && "BC".indexOf(payCode) == -1) {
+			return PricerResult.build(PricerResult.RST_PAY_CODE_NOT_ABC);
+		}
+		String geoLoc = this.getProv().getP_cbsa_geo_loc();
 		if (geoLoc != null && geoLoc.indexOf('*') != -1) {
-			return PricerResult.build(RST_CODE_INVALID_CBSA_OR_WI);
+			return PricerResult.build(PricerResult.RST_INVALID_CBSA_OR_WI);
 		}
-		this.wageIndex = findWageIndex();
-		if (wageIndex == null) {
-			return PricerResult.build(RST_CODE_INVALID_CBSA_OR_WI);
+		this.wageIndexRec = findWageIndexRec();
+		if (wageIndexRec == null) {
+			return PricerResult.build(PricerResult.RST_INVALID_CBSA_OR_WI);
 		}
 
+		// Assign review code
+		if (transfer) {
+			reviewCode = PAY_PERDIEM_DAYS;
+		}
+		if (postAcuteTransfer && drgTab.isDrgPostacute5050()) {
+			reviewCode = PAY_XFER_SPEC_DRG;
+		}
+
+		// TODO: should do this?
 		fillProcDiagList();
+
+		editTheBillInfo();
+		assemblePPSVariables();
+		calcPayment();
+
 		return null;
 	}
 }

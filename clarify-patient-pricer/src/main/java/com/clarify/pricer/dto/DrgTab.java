@@ -1,11 +1,13 @@
 package com.clarify.pricer.dto;
 
+import java.math.BigDecimal;
+
 public class DrgTab {
 	private String drg_code;
-	private Double drg_weight;
-	private Double drg_gmalos;
+	private BigDecimal drg_weight;
+	private BigDecimal drg_gmalos;
 	private Double drg_low;
-	private Double drg_arith_alos;
+	private BigDecimal drg_arith_alos;
 	private String drg_pac;
 	private String drg_sppac;
 	private String drg_desc;
@@ -18,19 +20,19 @@ public class DrgTab {
 		this.drg_code = drg_code;
 	}
 
-	public Double getDrg_weight() {
+	public BigDecimal getDrg_weight() {
 		return drg_weight;
 	}
 
-	public void setDrg_weight(Double drg_weight) {
+	public void setDrg_weight(BigDecimal drg_weight) {
 		this.drg_weight = drg_weight;
 	}
 
-	public Double getDrg_gmalos() {
+	public BigDecimal getDrg_gmalos() {
 		return drg_gmalos;
 	}
 
-	public void setDrg_gmalos(Double drg_gmalos) {
+	public void setDrg_gmalos(BigDecimal drg_gmalos) {
 		this.drg_gmalos = drg_gmalos;
 	}
 
@@ -42,11 +44,11 @@ public class DrgTab {
 		this.drg_low = drg_low;
 	}
 
-	public Double getDrg_arith_alos() {
+	public BigDecimal getDrg_arith_alos() {
 		return drg_arith_alos;
 	}
 
-	public void setDrg_arith_alos(Double drg_arith_alos) {
+	public void setDrg_arith_alos(BigDecimal drg_arith_alos) {
 		this.drg_arith_alos = drg_arith_alos;
 	}
 
@@ -81,4 +83,15 @@ public class DrgTab {
 	public void setDrg_desc(String drg_desc) {
 		this.drg_desc = drg_desc;
 	}
+
+	// 88 D-DRG-POSTACUTE-PERDIEM VALUE 'Y '.
+	public boolean isDrgPostacutePerdiem() {
+		return "Y".equals(drg_pac) && " ".equals(drg_sppac);
+	}
+
+	// 88 D-DRG-POSTACUTE-50-50 VALUE 'Y Y'.
+	public boolean isDrgPostacute5050() {
+		return "Y".equals(drg_pac) && "Y".equals(drg_sppac);
+	}
+
 }

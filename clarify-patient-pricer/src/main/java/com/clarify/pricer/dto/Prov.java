@@ -1,10 +1,12 @@
 package com.clarify.pricer.dto;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 public class Prov {
-	public static final String TYPE_INDIAN_HEALTH_SERVICE = "08";
-
 	private String prov_plus1;
 	private String p_npi8;
 	private String p_npi_filler;
@@ -26,8 +28,8 @@ public class Prov {
 	private String p_temp_relief_ind;
 	private String p_fed_pps_blend;
 	private Double p_cmi_adj_cpd;
-	private Double p_cola;
-	private Double p_intern_ratio;
+	private BigDecimal p_cola;
+	private BigDecimal p_intern_ratio;
 	private Integer p_bed_size;
 	private Double p_ccr;
 	private Double p_cmi;
@@ -42,13 +44,13 @@ public class Prov {
 	private String p_cbsa_geo_loc;
 	private String p_cbsa_reclass_loc;
 	private String p_cbsa_stand_amt_loc;
-	private Double p_cbsa_spec_wi;
+	private BigDecimal p_cbsa_spec_wi;
 	private Double p_pass_amt_capital;
 	private Double p_pass_amt_dir_med_ed;
 	private Double p_pass_amt_organ_acq;
 	private Double p_pass_amt_plus_misc;
 	private String p_capi_pps_pay_code;
-	private Double p_capi_hosp_spec_rate;
+	private BigDecimal p_capi_hosp_spec_rate;
 	private Double p_capi_old_harm_rate;
 	private Double p_capi_new_harm_ratio;
 	private Double p_capi_cstchg_ratio;
@@ -233,19 +235,19 @@ public class Prov {
 		this.p_cmi_adj_cpd = p_cmi_adj_cpd;
 	}
 
-	public Double getP_cola() {
+	public BigDecimal getP_cola() {
 		return p_cola;
 	}
 
-	public void setP_cola(Double p_cola) {
+	public void setP_cola(BigDecimal p_cola) {
 		this.p_cola = p_cola;
 	}
 
-	public Double getP_intern_ratio() {
+	public BigDecimal getP_intern_ratio() {
 		return p_intern_ratio;
 	}
 
-	public void setP_intern_ratio(Double p_intern_ratio) {
+	public void setP_intern_ratio(BigDecimal p_intern_ratio) {
 		this.p_intern_ratio = p_intern_ratio;
 	}
 
@@ -372,11 +374,11 @@ public class Prov {
 		this.p_cbsa_stand_amt_loc = p_cbsa_stand_amt_loc;
 	}
 
-	public Double getP_cbsa_spec_wi() {
+	public BigDecimal getP_cbsa_spec_wi() {
 		return p_cbsa_spec_wi;
 	}
 
-	public void setP_cbsa_spec_wi(Double p_cbsa_spec_wi) {
+	public void setP_cbsa_spec_wi(BigDecimal p_cbsa_spec_wi) {
 		this.p_cbsa_spec_wi = p_cbsa_spec_wi;
 	}
 
@@ -420,11 +422,11 @@ public class Prov {
 		this.p_capi_pps_pay_code = p_capi_pps_pay_code;
 	}
 
-	public Double getP_capi_hosp_spec_rate() {
+	public BigDecimal getP_capi_hosp_spec_rate() {
 		return p_capi_hosp_spec_rate;
 	}
 
-	public void setP_capi_hosp_spec_rate(Double p_capi_hosp_spec_rate) {
+	public void setP_capi_hosp_spec_rate(BigDecimal p_capi_hosp_spec_rate) {
 		this.p_capi_hosp_spec_rate = p_capi_hosp_spec_rate;
 	}
 
@@ -548,12 +550,70 @@ public class Prov {
 		this.p_prov_name = p_prov_name;
 	}
 
+	// *****
+
 	public boolean isIndianHealtService() {
-		return TYPE_INDIAN_HEALTH_SERVICE.equals(p_provider_type);
+		return "08".equals(p_provider_type);
 	}
 
 	public boolean isCbsaStdRuralCheck() {
 		return p_cbsa_stand_amt_loc != null
 				&& p_cbsa_stand_amt_loc.startsWith("   ");
+	}
+
+	public String getState() {
+		return p_provider_no.substring(0, 2);
+	}
+
+	public boolean isAlaska() {
+		return "02".equals(getState());
+	}
+
+	public boolean isHawaii() {
+		return "12".equals(getState());
+	}
+
+	public boolean isPuertoRico() {
+		return "40".equals(getState());
+	}
+
+	/**
+	 * <code>88 P-N-MDH-REBASED-FY90 VALUE '14' '15'.</code>
+	 * 
+	 * @return
+	 */
+	public boolean isMdhRebasedFY90() {
+		return "14".equals(p_provider_type) || "15".equals(p_provider_type);
+	}
+
+	/**
+	 * <code>88 P-N-SCH-REBASED-FY90 VALUE '16' '17'.</code>
+	 * 
+	 * @return
+	 */
+	public boolean isSchRebasedFY90() {
+		return "16".equals(p_provider_type) || "17".equals(p_provider_type);
+	}
+
+	/**
+	 * <code>88 P-N-EACH VALUE '21' '22'.</code>
+	 * 
+	 * @return
+	 */
+	public boolean isEach() {
+		return "21".equals(p_provider_type) || "22".equals(p_provider_type);
+	}
+
+	/**
+	 * <p>
+	 * PROV.B-FORMER-MDH-PROVIDERS as 161
+	 * </p>
+	 */
+	protected static List<String> FORMER_MDH_ROVIDERS = new ArrayList<>(
+			Arrays.asList(new String[] { "080006", "140184", "390072",
+					"420019", "440031", "450451", "490019", "510062" }));
+
+	public boolean isFormerMdhProvider() {
+		return FORMER_MDH_ROVIDERS.indexOf(p_provider_no) != -1;
 	}
 }

@@ -1,6 +1,5 @@
 package com.clarify;
 
-
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -275,6 +274,14 @@ public class CobolUtils {
 				}
 				stm.execute();
 			}
+			con.commit();
+		} catch (Exception ex) {
+			con.rollback();
+			if (ex instanceof SQLException) {
+				throw (SQLException) ex;
+			} else {
+				throw new RuntimeException(ex);
+			}
 		} finally {
 			con.setAutoCommit(saveAutoCommit);
 		}
@@ -436,4 +443,25 @@ public class CobolUtils {
 		}
 	}
 
+	public static String toCamelCase(String cobolIdentifier, boolean firstlower) {
+		String result = "";
+		String[] parts = cobolIdentifier.split("-");
+		boolean first = true;
+		for (String part : parts) {
+			if (first && firstlower) {
+				part = part.toLowerCase();
+			} else {
+				part = part.substring(0, 1).toUpperCase()
+						+ (part.length() > 1 ? part.substring(1).toLowerCase()
+								: "");
+			}
+			result += part;
+			first = false;
+		}
+		return result;
+	}
+
+	public static String toCamelCase(String cobolIdentifier) {
+		return toCamelCase(cobolIdentifier, true);
+	}
 }

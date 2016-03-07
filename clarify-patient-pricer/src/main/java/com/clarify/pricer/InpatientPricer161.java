@@ -1,10 +1,11 @@
 package com.clarify.pricer;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class InpatientPricer161 extends InpatientPricer {
 
-	// Sceen items commented:
+	// Screen items commented:
 	// BUNDLE-ADJUSTMENT
 	// NEWTECH-INPACT
 
@@ -59,29 +60,37 @@ public class InpatientPricer161 extends InpatientPricer {
 	// are moved proc code #5, perhaps a bug in COBOL code.
 	@Override
 	protected void fillProcDiagList() {
-		if (flags.getOrDefault(NEWTECH_CARDIO, false)) {
+		if (getFlags().getOrDefault(NEWTECH_CARDIO, false)) {
 			addToProcDiagList("02HQ30Z");
 		}
-		if (flags.getOrDefault(NEWTECH_BLINAT, false)) {
+		if (getFlags().getOrDefault(NEWTECH_BLINAT, false)) {
 			addToProcDiagList("XW03351");
 		}
-		if (flags.getOrDefault(NEWTECH_LUTONIX, false)) {
+		if (getFlags().getOrDefault(NEWTECH_LUTONIX, false)) {
 			addToProcDiagList("047K041");
 		}
-		if (flags.getOrDefault(NEWTECH_ARGUS, false)) {
+		if (getFlags().getOrDefault(NEWTECH_ARGUS, false)) {
 			addToProcDiagList("08H005Z");
 		}
-		if (flags.getOrDefault(NEWTECH_KCENTRA, false)) {
+		if (getFlags().getOrDefault(NEWTECH_KCENTRA, false)) {
 			addToProcDiagList("30283B1");
 		}
-		if (flags.getOrDefault(NEWTECH_MITRCLP, false)) {
+		if (getFlags().getOrDefault(NEWTECH_MITRCLP, false)) {
 			addToProcDiagList("02UG3JZ");
 		}
-		if (flags.getOrDefault(NEWTECH_RNSSYST, false)) {
+		if (getFlags().getOrDefault(NEWTECH_RNSSYST, false)) {
 			addToProcDiagList("0NH00NZ");
 		}
-		if (flags.getOrDefault(NEWTECH_CELL_XFER, false)) {
+		if (getFlags().getOrDefault(NEWTECH_CELL_XFER, false)) {
 			addToProcDiagList("3E030U1", "Z006");
+		}
+	}
+
+	@Override
+	protected void assemblePPSVariables() {
+		super.assemblePPSVariables();
+		if (getProv().isFormerMdhProvider()) {
+			getHoldArea().setOperHspPct(BigDecimal.ONE);
 		}
 	}
 }
